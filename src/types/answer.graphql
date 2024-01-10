@@ -1,0 +1,18 @@
+type Answer {
+  name: String
+}
+
+type Query {
+  answer: Answer
+}
+
+type Mutation {
+  registerStudentAnswer(arg: String): String
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  ORDER_ALTERNATIVES
+  CLASSIFICATION
+  ASSOCIATE_ALTERNATIVES
+}

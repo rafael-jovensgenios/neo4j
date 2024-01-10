@@ -1,89 +1,73 @@
-import { ApolloServer, gql } from "apollo-server";
-import {Neo4jGraphQL} from "@neo4j/graphql";
-import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
-import { typeDefs } from "./squema";
-import { movieResolvers } from "./graphql/movie/resolver";
-console.log(movieResolvers);
-require('dotenv').config();
-const neo4j = require("neo4j-driver");
+/**
+ * This file serves as the entry point for the Student Answer Service API.
+ * It imports necessary dependencies, initializes the Apollo Server, and starts the server.
+ */
 
-const driver = neo4j.driver(
-  process.env.NEO4J_URI,
-  neo4j.auth.basic(process.env.NEO4J_USER, process.env.NEO4J_PASSWORD)
-);
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import { ApolloServer } from "@apollo/server";
+import { expressMiddleware } from "@apollo/server/express4";
+import { createServer } from "http";
 
-const neoSchema = new Neo4jGraphQL({ typeDefs, driver });
+import { typeDefs } from "./types/typeDefs";
+import { resolvers } from "./resolvers/index";
 
-neoSchema.getSchema().then((schema) => {
-    
-    const server = new ApolloServer({
-      schema,
-      resolvers: [movieResolvers],
-      plugins: [
-        ApolloServerPluginLandingPageGraphQLPlayground({
-          settings: {
-            'editor.theme': 'dark',
-          },
-        }),
-      ],
-      context: ({ req }) => ({ driver })
-    });
-  
-    server.listen(4001).then(({ url }) => {
-      console.log(`GraphQL server ready on ${url}`);
-    }).catch((error) => {
-      console.error("Error starting server:", error);
-    });
-  }).catch((error) => {
-    console.error("Error building schema:", error);
+import { driver } from "./clients/neo4j";
+
+import { Neo4jGraphQL, CypherRuntime } from "@neo4j/graphql";
+
+dotenv.config();
+
+const app = express();
+
+const host = process.env.GRAPHQL_SERVER_HOST || "127.0.0.1";
+const port = process.env.GRAPHQL_SERVER_PORT || 4000;
+const path = process.env.GRAPHQL_SERVER_PATH || "/graphql";
+
+const initializeNeo4jGraphql = async () => {
+  const neoSchema = new Neo4jGraphQL({
+    typeDefs,
+    driver,
+    resolvers,
+  });
+  return neoSchema.getSchema();
+};
+
+/**
+ * Initializes the Apollo Server, sets up the necessary middleware, and starts the server.
+ * @returns {Promise<void>} A promise that resolves when the server is successfully started.
+ */
+const initializeServer = async () => {
+  const schema = await initializeNeo4jGraphql();
+  const server = new ApolloServer({
+    schema,
+    typeDefs,
+    resolvers,
+    introspection: true,
   });
 
+  await server.start();
 
-// const { ApolloServer } = require("apollo-server");
-// const { Neo4jGraphQL } = require("@neo4j/graphql");
-// const neo4j = require("neo4j-driver");
-// const { ApolloServerPluginLandingPageGraphQLPlayground } = require("apollo-server-core");
-// const fs = require("fs");
-// const path = require("path");
+  const httpServer = createServer(app);
 
-// require('dotenv').config();
+  app.use(
+    path,
+    cors(),
+    express.urlencoded({ extended: true, limit: "20mb" }),
+    express.json({ limit: "20mb" }),
+    expressMiddleware(server, {
+      context: ({ req }) => ({ driver }),
+    })
+  );
 
-// // Configuração para aumentar o limite de ouvintes de eventos
-// require('events').EventEmitter.defaultMaxListeners = 15;
+  httpServer.listen({ port, host, path }, () => {
+    console.log(`🚀 Server ready at http://${host}:${port}${path}`);
+  });
 
-// // Leitura do arquivo typedef.graphql para Movie
-// const movieTypeDefs = fs.readFileSync(path.join(__dirname, "graphql/movie/typedef.graphql"), "utf-8");
-// const queries = fs.readFileSync(path.join(__dirname, "graphql/query.graphql"), "utf-8");
+  app.get("/health", (req, res) => {
+    res.status(200).send("Okay!");
+  });
+};
 
-// // Importando resolvers apenas para Movie
-// const movieResolvers = require("./graphql/movie/resolver");
-
-// const typeDefs = `${queries}`;
-
-// const driver = neo4j.driver(
-//   process.env.NEO4J_URI,
-//   neo4j.auth.basic(process.env.NEO4J_USER, process.env.NEO4J_PASSWORD)
-// );
-
-// const neoSchema = new Neo4jGraphQL({ typeDefs, driver });
-
-// neoSchema.getSchema().then((schema) => {
-//   const server = new ApolloServer({
-//     schema,
-//     plugins: [
-//       ApolloServerPluginLandingPageGraphQLPlayground({
-//         settings: {
-//           'editor.theme': 'light',
-//         },
-//       }),
-//     ],
-//   });
-
-//   server.listen().then(({ url }) => {
-//     console.log(`GraphQL server ready on ${url}`);
-//   }).catch((error) => {
-//     console.error("Error starting server:", error);
-//   });
-// }).catch((error) => {
-//   console.error("Error building schema:", error);
-// });
+initializeServer();

@@ -1,27 +1,35 @@
 {
-  "name": "neo4jgraphql",
+  "name": "student-answer-service-api",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.js",
+  "main": "src/cluster.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon -r sucrase/register src/index.js"
+    "test": "jest --passWithNoTests",
+    "dev": "nodemon --exec babel-node src/index.js"
   },
-  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jovens-Genios/Student-answer-service-API.git"
+  },
   "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jovens-Genios/Student-answer-service-API/issues"
+  },
+  "homepage": "https://github.com/Jovens-Genios/Student-answer-service-API#readme",
   "dependencies": {
-    "@graphql-tools/import": "^7.0.0",
+    "@apollo/server": "^4.10.0",
+    "@babel/cli": "^7.23.4",
+    "@babel/core": "^7.23.7",
+    "@babel/node": "^7.22.19",
+    "@babel/preset-env": "^7.23.7",
     "@neo4j/graphql": "^4.4.4",
-    "apollo-server": "^3.13.0",
     "dotenv": "^16.3.1",
-    "graphql": "^16.8.1",
-    "neo4j-driver": "^5.16.0",
-    "nodemon": "^3.0.2"
+    "express": "^4.18.2",
+    "lodash": "^4.17.21",
+    "neo4j-driver": "^5.16.0"
   },
   "devDependencies": {
-    "@graphql-tools/graphql-file-loader": "^8.0.0",
-    "@graphql-tools/load": "^8.0.1",
-    "sucrase": "^3.35.0"
+    "nodemon": "^3.0.2"
   }
 }
