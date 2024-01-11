@@ -1,22 +1,19 @@
 import Resolvers from '../resolvers/movie.resolver';
+import { driver } from '../clients/neo4j';
+
+const neo4jDriver = driver;
+const resolvers = Resolvers(neo4jDriver);
 
 const getMovies = async (req, res) => {
-    const movies = await Resolvers.Query.getMovies();
-    res.send({
-        status: 200,
-        data: movies,
-    });
+    const movies = await resolvers.Query.getMovies();
+    res.send({ status: 200, data: movies });
 };
 
 const getMovie = async (req, res) => {
     const { id } = req.params;
+    const movie = await resolvers.Query.getMovie(id);
 
-    const movie = await Resolvers.Query.getMovie(id);
-
-    res.status(200).json({
-        status: 200,
-        data: movie,
-    });
+    res.status(200).json({ status: 200, data: movie });
 };
 
 const storeMovie = async (req, res) => {
@@ -28,12 +25,9 @@ const storeMovie = async (req, res) => {
             releaseDate: movie.releaseDate,
         };
 
-        const createdMovie = await Resolvers.Mutation.createMovie(null, { input: mutationInput });
+        const createdMovie = await resolvers.Mutation.createMovie(null, { input: mutationInput });
 
-        res.status(200).json({
-            status: 200,
-            data: createdMovie,
-        });
+        res.status(200).json({ status: 200, data: createdMovie });
     } catch (error) {
         console.error('Error creating movie:', error);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -44,7 +38,7 @@ const updateMovie =async (req, res) => {
     try {
         const { id } = req.params;
         const { title, director, releaseDate } = req.body;
-        const createdMovie = await Resolvers.Mutation.updateMovie(null, { id, input:{title, director, releaseDate} });
+        const createdMovie = await resolvers.Mutation.updateMovie(null, { id, input:{title, director, releaseDate} });
         res.status(200).json(createdMovie);
     } catch (error) {
         console.error('Error updating movie:', error);
@@ -55,7 +49,7 @@ const updateMovie =async (req, res) => {
 const deleteMovie = async (req, res) => {
     try {
         const { id } = req.params;
-        await Resolvers.Mutation.deleteMovie(null, { id });
+        await resolvers.Mutation.deleteMovie(null, { id });
 
         res.status(200).json({
             status: 200,
@@ -67,4 +61,4 @@ const deleteMovie = async (req, res) => {
     }
 };
 
-export { getMovies, storeMovie, updateMovie, deleteMovie, getMovie};
+export { getMovies, storeMovie, updateMovie, deleteMovie, getMovie };

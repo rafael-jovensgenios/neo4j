@@ -1,9 +1,9 @@
 import { driver } from '../clients/neo4j';
 
-export default {
+export default (neo4jDriver) => ({
   Query: {
     getMovie: async (_, args, context, requestInfo) => {
-      const session = driver.session();
+      const session = neo4jDriver.session();
 
       try {
         const result = await session.run('MATCH (m:Movie {id: $id}) RETURN m', { id });
@@ -101,4 +101,4 @@ export default {
       }
     },
   }
-};
+});
