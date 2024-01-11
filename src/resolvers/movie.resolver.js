@@ -6,9 +6,8 @@ export default {
       const session = driver.session();
 
       try {
-        const result = await session.run('MATCH (m:Movie {title: $title}) RETURN m', { title: 'Teste2' });
-        console.log(result.records.records, args);
-
+        const result = await session.run('MATCH (m:Movie {id: $id}) RETURN m', { id });
+        console.log(result);
 
         const movies = result.records.map(record => {
           const movie = record.get('m').properties;
@@ -65,9 +64,8 @@ export default {
         await session.close();
       }
     },
-    updateMovie: async (_, { id, input }, context) => {
+    updateMovie: async (_, { id, input }) => {
       const session = driver.session();
-      console.log(id);
       try {
         const result = await session.run(
           'MATCH (m:Movie {id: $id}) SET m += {title: $title, director: $director, releaseDate: $releaseDate} RETURN m',
@@ -78,7 +76,7 @@ export default {
             releaseDate: input.releaseDate,
           }
         );
-        console.log(result.records);
+
         if (result.records.length > 0) {
           const updatedMovie = result.records[0].get('m').properties;
           return updatedMovie;
@@ -89,7 +87,7 @@ export default {
         await session.close();
       }
     },
-    deleteMovie: async (_, { id }, context) => {
+    deleteMovie: async (_, { id }) => {
       const session = driver.session();
 
       try {

@@ -16,6 +16,7 @@ import { resolvers } from "./resolvers/index";
 import { driver } from "./clients/neo4j";
 
 import { Neo4jGraphQL, CypherRuntime } from "@neo4j/graphql";
+import routes from './routes/web';
 
 dotenv.config();
 
@@ -51,6 +52,10 @@ const initializeServer = async () => {
 
   const httpServer = createServer(app);
 
+  app.use(express.json());
+
+  app.use(express.urlencoded({ extended: true }));
+  
   app.use(
     path,
     cors(),
@@ -60,6 +65,8 @@ const initializeServer = async () => {
       context: ({ req }) => ({ driver }),
     })
   );
+
+  app.use('/', routes);
 
   httpServer.listen({ port, host, path }, () => {
     console.log(`🚀 Server ready at http://${host}:${port}${path}`);
