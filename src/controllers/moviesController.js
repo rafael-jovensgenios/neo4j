@@ -1,8 +1,7 @@
 import Resolvers from '../resolvers/movie.resolver';
 import { driver } from '../clients/neo4j';
 
-const neo4jDriver = driver;
-const resolvers = Resolvers(neo4jDriver);
+const resolvers = Resolvers(driver);
 
 const getMovies = async (req, res) => {
     const movies = await resolvers.Query.getMovies();
