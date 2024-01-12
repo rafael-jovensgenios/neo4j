@@ -2,23 +2,31 @@ import { driver } from '../clients/neo4j';
 
 export default (neo4jDriver) => ({
   Query: {
-    getMovie: async (_, args, context, requestInfo) => {
+    getMovie: async (id) => {
       const session = neo4jDriver.session();
 
       try {
-        const result = await session.run('MATCH (m:Movie {id: $id}) RETURN m', { id });
-        console.log(result);
+        if (!id) {
+          throw new Error('ID do filme não fornecido.');
+        }
 
-        const movies = result.records.map(record => {
-          const movie = record.get('m').properties;
-          return {
-            title: movie.title,
-            director: movie.director,
-            releaseDate: movie.releaseDate,
-          };
-        });
-        console.log(movies);
-        return movies
+        const query = `
+            MATCH (m:Movie)
+            WHERE ID(m) = ${id}
+            RETURN m
+        `;
+        const result = await session.run(query);
+
+        if (result.records.length === 0) {
+          console.error(`Nenhum filme encontrado com o ID ${id}.`);
+          return (`Nenhum filme encontrado com o ID ${id}.`);
+        }
+        const movie = { ...result.records[0].get('m').properties };
+
+        return movie
+      } catch (error) {
+        console.error('Erro durante a execução da função getMovie:', error.message);
+        throw error;
       } finally {
         await session.close();
       }
@@ -81,7 +89,7 @@ export default (neo4jDriver) => ({
           const updatedMovie = result.records[0].get('m').properties;
           return updatedMovie;
         } else {
-          throw new Error('Filme não encontrado com o ID especificado.');
+          return ('Filme não encontrado com o ID especificado.');
         }
       } finally {
         await session.close();

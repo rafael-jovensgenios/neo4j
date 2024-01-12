@@ -12,7 +12,7 @@ const getMovies = async (req, res) => {
 
 const getMovie = async (req, res) => {
     const { id } = req.params;
-    const movie = await resolvers.Query.getMovie(id);
+    const movie = await resolvers.Query.getMovie(parseInt(id));
 
     res.status(HTTP_STATUS.OK).json({ data: movie });
 };

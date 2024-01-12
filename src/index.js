@@ -16,14 +16,14 @@ import { resolvers } from "./resolvers/index";
 import { driver } from "./clients/neo4j";
 
 import { Neo4jGraphQL, CypherRuntime } from "@neo4j/graphql";
-import routes from './routes/web';
+import routes from './routes/api';
 
 dotenv.config();
 
 const app = express();
 
 const host = process.env.GRAPHQL_SERVER_HOST || "127.0.0.1";
-const port = process.env.GRAPHQL_SERVER_PORT || 4000;
+const port = process.env.GRAPHQL_SERVER_PORT || 4001;
 const path = process.env.GRAPHQL_SERVER_PATH || "/graphql";
 
 const initializeNeo4jGraphql = async () => {
