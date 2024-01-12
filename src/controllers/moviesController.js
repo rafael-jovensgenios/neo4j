@@ -1,47 +1,54 @@
 import Resolvers from '../resolvers/movie.resolver';
 import { driver } from '../clients/neo4j';
+import { HTTP_STATUS, ERROR_MESSAGES } from '../utils/constants';
+import { validateMovieFields } from '../validators/validatorMovie'
 
 const resolvers = Resolvers(driver);
 
 const getMovies = async (req, res) => {
     const movies = await resolvers.Query.getMovies();
-    res.send({ status: 200, data: movies });
+    res.send({ status: HTTP_STATUS.OK, data: movies });
 };
 
 const getMovie = async (req, res) => {
     const { id } = req.params;
     const movie = await resolvers.Query.getMovie(id);
 
-    res.status(200).json({ status: 200, data: movie });
+    res.status(HTTP_STATUS.OK).json({ data: movie });
 };
 
 const storeMovie = async (req, res) => {
     const { movie } = req.body;
+
     try {
-        const mutationInput = {
-            title: movie.title,
-            director: movie.director,
-            releaseDate: movie.releaseDate,
-        };
+        const { title, director, releaseDate } = movie;
 
-        const createdMovie = await resolvers.Mutation.createMovie(null, { input: mutationInput });
+        if (validateMovieFields(movie)) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: ERROR_MESSAGES.MISSING_PROPERTIES_MOVIE });
+        }
 
-        res.status(200).json({ status: 200, data: createdMovie });
+        const createdMovie = await resolvers.Mutation.createMovie(null, { input: { title, director, releaseDate } });
+        res.status(HTTP_STATUS.OK).json({ data: createdMovie });
     } catch (error) {
-        console.error('Error creating movie:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error(`${ERROR_MESSAGES.MISSING_PROPERTIES_MOVIE}:`, error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
     }
 };
 
-const updateMovie =async (req, res) => {
+const updateMovie = async (req, res) => {
     try {
         const { id } = req.params;
         const { title, director, releaseDate } = req.body;
-        const createdMovie = await resolvers.Mutation.updateMovie(null, { id, input:{title, director, releaseDate} });
-        res.status(200).json(createdMovie);
+
+        if (!validateMovieFields({ title, director, releaseDate })) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: ERROR_MESSAGES.MISSING_FIELDS_MOVIE });
+        }
+
+        const createdMovie = await resolvers.Mutation.updateMovie(null, { id, input: { title, director, releaseDate } });
+        res.status(HTTP_STATUS.OK).json(createdMovie);
     } catch (error) {
-        console.error('Error updating movie:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error(`${ERROR_MESSAGES.ERROR_UPDATING_MOVIE}:`, error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
     }
 };
 
@@ -50,13 +57,10 @@ const deleteMovie = async (req, res) => {
         const { id } = req.params;
         await resolvers.Mutation.deleteMovie(null, { id });
 
-        res.status(200).json({
-            status: 200,
-            message: `Movie with ID ${id} deleted successfully.`,
-        });
+        res.status(HTTP_STATUS.OK).json({ message: `Movie with ID ${id} deleted successfully.` });
     } catch (error) {
-        console.error('Error deleting movie:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error(ERROR_MESSAGES.ERROR_DELETING_MOVIE, error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
     }
 };
 
